@@ -8,10 +8,23 @@
     },
     {
         "id": 1,
-        "username": "Luke_1",
-        "key": "W9lj1PZ8sdkhxz0OSaHEpA",
+        "username": "BuDose_0",
+        "tz": "POO",
+        "key": "pJCtF65Vsqw-snhOm9gIjQ",
         "timers": [
-            2
+            6,
+            7
+        ],
+        "projects": []
+    },
+    {
+        "id": 2,
+        "username": "LuDose_0",
+        "tz": "POO",
+        "key": "qJCtF65Vsqw-snhOm9gIjQ",
+        "timers": [
+            8,
+            9
         ],
         "projects": []
     }
