@@ -83,9 +83,6 @@ class Users(Resource):
 
 
 
-
-
-
 class Timers(Resource):
     # methods go here
     def post(self):
@@ -100,7 +97,6 @@ class Timers(Resource):
 
         users = load_database('users')
         timers = load_database('timers')
-
 
         current_user = None
         for user in users:
@@ -120,7 +116,6 @@ class Timers(Resource):
             print(running_timer)
             if(running_timer == None):
                 return {'message': f"'{args['timer_id']}' is an invalid timer id"}, 401
-
 
         return_value = None
         if(args['start'] == None and args['end'] == None and args['timer_id'] == None):  # they gave a blank timer
@@ -146,14 +141,36 @@ class Timers(Resource):
         store_database('timers', timers)
         store_database('users', users)
 
-
-        #TODO: Alternare forms of timer post: just end timer, both, project_id, etc.
-
         return {'data': return_value}, 200  # return data and 200 OK code
 
 
-    #TODO: get for timer in daterange?
+    #TODO: get for timers in date range?
+    def get(self):
+        parser = reqparse.RequestParser()  # initialize
+        parser.add_argument('key', required=True , location="headers", help="API KEY REQUIRED")  # add header
+        parser.add_argument('project_id', required=False)  # add args
+        #parser.add_argument('start_date', required=True)  # add args
+        #parser.add_argument('end_date', required=True)  # add args
+        args = parser.parse_args()
+        
+        users = load_database('users')
+        timers = load_database('timers')
 
+        current_user = None
+        for user in users:
+            if(user['key'] == args['key']):
+                current_user = user
+                break
+        if(current_user == None):
+            return {'message': f"'{args['key']}' is an invalid API key"}, 401
+        
+        #TODO: start and end dates AFTER PROPER DATABASES
+        return_value = []
+        for timer in timers:
+            if(timer['user_id'] == current_user['id']):
+                return_value.append(timer)
+
+        return {'data': return_value}, 200  # return data and 200 OK code
 
 
 
