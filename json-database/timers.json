@@ -1,0 +1,17 @@
+[
+    {
+        "id": 0,
+        "user_id": 0,
+        "start": "date_str",
+        "end": "date_str",
+        "project_id": 0
+    },
+    {
+        "id": 2,
+        "user_id": 1,
+        "description": "this is a test of the timer",
+        "start": "11/01/2021, 16:02:02",
+        "end": null,
+        "project_id": 0
+    }
+]

@@ -1,0 +1,18 @@
+[
+    {
+        "id": 0,
+        "username": "ADMIN",
+        "key": "ADMIN",
+        "timers": [],
+        "projects": []
+    },
+    {
+        "id": 1,
+        "username": "Luke_1",
+        "key": "W9lj1PZ8sdkhxz0OSaHEpA",
+        "timers": [
+            2
+        ],
+        "projects": []
+    }
+]
