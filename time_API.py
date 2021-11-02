@@ -1,18 +1,82 @@
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
+from flask_sqlalchemy import SQLAlchemy
 import pandas as pd
 import json
 import ast
 import secrets
 from datetime import datetime
+from flask_login import UserMixin
+from pprint import pprint as pprint
 
 app = Flask(__name__)
 api = Api(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site000.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-from pprint import pprint as pprint
+#----------------------------------------------------------------------- DATABASE OBJECTS
+
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(), unique=True, nullable=False)
+    email = db.Column(db.String(), unique=True, nullable=False)
+    password = db.Column(db.String(), nullable=False)
+    api_key = db.Column(db.String(), nullable=False, unique=True)
+    time_zone = db.Column(db.String(), nullable=False, default=0) #ex: EST
+    admin = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
+
+    projects = db.relationship('Project', backref='user', lazy=True)
+    task_entries = db.relationship('Task_Entry', backref='user', lazy=True)
+    time_entries = db.relationship('Time_Entry', backref='user', lazy=True)
+
+    def __str__(self):
+        return f"USER({self.id},'{self.username}')"
+
+class Project(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), unique=True, nullable=False)
+    color = db.Column(db.String(), nullable=False, default="#292929") #hex color
+
+    time_entries = db.relationship('Time_Entry', backref='project', lazy=True)
+    task_entries = db.relationship('Task_Entry', backref='project', lazy=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __str__(self):
+        return f"PROJECT({self.id},'{self.name}', '{User.query.get(self.user_id).username}')"
+
+class Time_Entry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(), nullable=True)
+    start = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) #iso
+    stop = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) #iso
+    duration = db.Column(db.Integer, nullable=True, default=0) #seconds
+    running = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __str__(self):
+        return f"TIME_ENTRY({self.id},'{self.description}',{self.duration})"
+
+class Task_Entry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(), unique=True, nullable=True)
+    due_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) #iso
+    do_date = db.Column(db.DateTime, nullable=True) #iso
+    priority = db.Column(db.Integer, nullable=False, default=1) #range(1 - 4)
+    completed = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __str__(self):
+        return f"TASK_ENTRY({self.id},'{self.description}',{self.due_date})"
 
 
-
+# db.drop_all()
+# db.create_all()
+#------------------------------------------------------------------------------------------ actual website
 
 def load_database(database):
     return json.load(open(f"./json-database/{database}.json","r"))
@@ -29,12 +93,17 @@ def generate_API_key(existing_users):
     while(temp_key in current_keys):
         temp_key = secrets.token_urlsafe(16)
 
+def generate_API_key(existing_users):
+    temp_key = secrets.token_urlsafe(16)
+    while(len(User.query.filter_by(api_key=temp_key).all()) > 0):
+        temp_key = secrets.token_urlsafe(16)
+
     return temp_key
 
 
+    
 #TODO: timezones
     
-
 
 
 #TODO: Store an acompanying hashmap of user ids to get users in O(1) time? or just switch to a proper database
@@ -68,9 +137,9 @@ class Users(Resource):
         users = load_database('users')
 
         current_user = {
-            "id" : users[-1]['id']+1 if len(users)>0 else 0,
+            "id" : users[-1]['id']+1 if len(users)>0 else 0, #TODO: change ternary to ORs
             "username" : args['name'],
-            "tz" : args['tz'] if args.get('tz') is not None else None, #'tz' in args.keys()
+            "tz" : args['tz'] if args.get('tz') is not None else None, #TODO: change ternary to ORs
             "key" : generate_API_key(users),
             "timers" : [],
             "projects" : [],
@@ -120,12 +189,12 @@ class Timers(Resource):
         return_value = None
         if(args['start'] == None and args['end'] == None and args['timer_id'] == None):  # they gave a blank timer
             current_timer = {
-                "id" : timers[-1]['id']+1 if len(timers)>0 else 0,
+                "id" : timers[-1]['id']+1 if len(timers)>0 else 0, #TODO: change ternary to ORs
                 "user_id" : current_user['id'],
-                "description" : args['description'] if args.get('description') is not None else None,
+                "description" : args['description'] if args.get('description') is not None else None, #TODO: change ternary to ORs
                 "start" : datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S"),
                 "end" : None,
-                "project_id" : args['project_id'] if args.get('project_id') is not None else None
+                "project_id" : args['project_id'] if args.get('project_id') is not None else None #TODO: change ternary to ORs
             }
             timers.append(current_timer)
             current_user['timers'].append(current_timer['id'])
@@ -174,11 +243,25 @@ class Timers(Resource):
 
 
 
+#TODO: tasks as a whole
+#       create task
+#       get tasks
+#       completete task
 
+
+
+#TODO: get and post for project completion
 class Projects(Resource):
-    # methods go here
-    pass
+    def post(self):
+        pass
+
+
+    def get(self):
+        # if a project id is passed get that one otherwise get all of them
+        pass
     
+
+
 api.add_resource(Users, '/users')  # '/users' is our entry point for Users
 api.add_resource(Timers, '/timers')  # and '/locations' is our entry point for Locations
 api.add_resource(Projects, '/projects')  # and '/projects' is our entry point for Projects
