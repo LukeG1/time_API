@@ -11,7 +11,7 @@ from pprint import pprint as pprint
 
 app = Flask(__name__)
 api = Api(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site002.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site003.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -60,7 +60,7 @@ class Time_Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(), nullable=True)
     start = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) #iso
-    stop = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) #iso
+    stop = db.Column(db.DateTime, nullable=True) #iso
     duration = db.Column(db.Integer, nullable=True, default=0) #seconds
     running = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
 
@@ -72,6 +72,9 @@ class Time_Entry(db.Model):
         return f"TIME_ENTRY({self.id},'{self.description}',{self.duration})"
 
     def to_dict(self):
+        stop_display = datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S")
+        if(self.stop is not None):
+            stop_display = self.stop.strftime("%m/%d/%Y, %H:%M:%S")
         return {
             "id" : self.id,
             "project_id" : self.project_id,
@@ -79,7 +82,7 @@ class Time_Entry(db.Model):
             "description" : self.description,
             "running" : self.running,
             "start" : self.start.strftime("%m/%d/%Y, %H:%M:%S"),
-            "stop" : self.stop.strftime("%m/%d/%Y, %H:%M:%S"),
+            "stop" : stop_display,
         }
 
 class Task_Entry(db.Model):
@@ -178,7 +181,7 @@ class Timers(Resource):
 
         return_value = None
         if(args['start'] == None and args['end'] == None and args['timer_id'] == None):  # they gave a blank timer
-            if(running_timer is not None):
+            if(Time_Entry.query.filter_by(running=1).first() is not None):
                 return {'message': "You already have a running timer!"}, 401
 
             new_timer = Time_Entry(
@@ -215,26 +218,29 @@ class Timers(Resource):
         parser = reqparse.RequestParser()  # initialize
         parser.add_argument('key', required=True , location="headers", help="API KEY REQUIRED")  # add header
         parser.add_argument('project_id', required=False)  # add args
-        #parser.add_argument('start_date', required=True)  # add args
-        #parser.add_argument('end_date', required=True)  # add args
+        parser.add_argument('mode', required=False)
+        parser.add_argument('start_date', required=False)  # add args
+        parser.add_argument('end_date', required=False)  # add args
         args = parser.parse_args()
-        
-        users = load_database('users')
-        timers = load_database('timers')
 
-        current_user = None
-        for user in users:
-            if(user['key'] == args['key']):
-                current_user = user
-                break
+        current_user = User.query.filter_by(api_key=args['key']).first()
         if(current_user == None):
             return {'message': f"'{args['key']}' is an invalid API key"}, 401
-        
-        #TODO: start and end dates AFTER PROPER DATABASES
-        return_value = []
-        for timer in timers:
-            if(timer['user_id'] == current_user['id']):
-                return_value.append(timer)
+
+        return_value = None
+        if(args.get('mode') == None or args.get('mode') == '0'): #default, return the running timer or nothing
+            timer = Time_Entry.query.filter_by(user_id=current_user.id, running=1).first()
+            if(timer is not None):
+                return_value = timer.to_dict()
+        #TODO: modes 1 and 2 for start and end ranges
+        elif(args.get('mode') == '1'): # since the start time
+            pass
+        elif(args.get('mode') == '2'): # between the start and end times
+            pass
+        elif(args.get('mode') == '3'): # everything
+            return_value = []
+            for timer in Time_Entry.query.filter_by(user_id=current_user.id).all():
+                return_value.append(timer.to_dict())
 
         return {'data': return_value}, 200  # return data and 200 OK code
 

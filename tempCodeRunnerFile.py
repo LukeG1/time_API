@@ -11,7 +11,7 @@ from pprint import pprint as pprint
 
 app = Flask(__name__)
 api = Api(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site002.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site003.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -60,7 +60,7 @@ class Time_Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(), nullable=True)
     start = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) #iso
-    stop = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) #iso
+    stop = db.Column(db.DateTime, nullable=True) #iso
     duration = db.Column(db.Integer, nullable=True, default=0) #seconds
     running = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
 
@@ -78,8 +78,8 @@ class Time_Entry(db.Model):
             "user_id" : self.user_id,
             "description" : self.description,
             "running" : self.running,
-            "start" : self.start,
-            "stop" : self.stop,
+            "start" : self.start.strftime("%m/%d/%Y, %H:%M:%S"),
+            "stop" : self.stop.strftime("%m/%d/%Y, %H:%M:%S") or datetime.utcnow.strftime("%m/%d/%Y, %H:%M:%S"),
         }
 
 class Task_Entry(db.Model):
