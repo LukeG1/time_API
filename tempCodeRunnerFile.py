@@ -1,17 +1,17 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd
 import json
 import ast
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_login import UserMixin
 from pprint import pprint as pprint
 
 app = Flask(__name__)
 api = Api(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site000.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site002.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -29,6 +29,17 @@ class User(db.Model, UserMixin):
     projects = db.relationship('Project', backref='user', lazy=True)
     task_entries = db.relationship('Task_Entry', backref='user', lazy=True)
     time_entries = db.relationship('Time_Entry', backref='user', lazy=True)
+
+    def to_dict(self):
+        return {
+            "id" : self.id,
+            "username" : self.username,
+            "email" : self.email,
+            "password" : self.password,
+            "api_key" : self.api_key,
+            "time_zone" : self.time_zone,
+            "admin" : self.admin,
+        }
 
     def __str__(self):
         return f"USER({self.id},'{self.username}')"
@@ -53,11 +64,23 @@ class Time_Entry(db.Model):
     duration = db.Column(db.Integer, nullable=True, default=0) #seconds
     running = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    #task_id = db.Column(db.Integer, db.ForeignKey('Task_Entry.id'), nullable=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __str__(self):
         return f"TIME_ENTRY({self.id},'{self.description}',{self.duration})"
+
+    def to_dict(self):
+        return {
+            "id" : self.id,
+            "project_id" : self.project_id,
+            "user_id" : self.user_id,
+            "description" : self.description,
+            "running" : self.running,
+            "start" : self.start,
+            "stop" : self.stop,
+        }
 
 class Task_Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -67,12 +90,12 @@ class Task_Entry(db.Model):
     priority = db.Column(db.Integer, nullable=False, default=1) #range(1 - 4)
     completed = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    #time_entries = db.relationship('Time_Entry', backref='task_entry', lazy=True)
 
     def __str__(self):
         return f"TASK_ENTRY({self.id},'{self.description}',{self.due_date})"
-
 
 db.drop_all()
 db.create_all()

@@ -1,17 +1,17 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd
 import json
 import ast
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_login import UserMixin
 from pprint import pprint as pprint
 
 app = Flask(__name__)
 api = Api(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site000.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site002.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -29,6 +29,17 @@ class User(db.Model, UserMixin):
     projects = db.relationship('Project', backref='user', lazy=True)
     task_entries = db.relationship('Task_Entry', backref='user', lazy=True)
     time_entries = db.relationship('Time_Entry', backref='user', lazy=True)
+
+    def to_dict(self):
+        return {
+            "id" : self.id,
+            "username" : self.username,
+            "email" : self.email,
+            "password" : self.password,
+            "api_key" : self.api_key,
+            "time_zone" : self.time_zone,
+            "admin" : self.admin,
+        }
 
     def __str__(self):
         return f"USER({self.id},'{self.username}')"
@@ -53,11 +64,23 @@ class Time_Entry(db.Model):
     duration = db.Column(db.Integer, nullable=True, default=0) #seconds
     running = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    #task_id = db.Column(db.Integer, db.ForeignKey('Task_Entry.id'), nullable=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __str__(self):
         return f"TIME_ENTRY({self.id},'{self.description}',{self.duration})"
+
+    def to_dict(self):
+        return {
+            "id" : self.id,
+            "project_id" : self.project_id,
+            "user_id" : self.user_id,
+            "description" : self.description,
+            "running" : self.running,
+            "start" : self.start.strftime("%m/%d/%Y, %H:%M:%S"),
+            "stop" : self.stop.strftime("%m/%d/%Y, %H:%M:%S"),
+        }
 
 class Task_Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -67,12 +90,12 @@ class Task_Entry(db.Model):
     priority = db.Column(db.Integer, nullable=False, default=1) #range(1 - 4)
     completed = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    #time_entries = db.relationship('Time_Entry', backref='task_entry', lazy=True)
 
     def __str__(self):
         return f"TASK_ENTRY({self.id},'{self.description}',{self.due_date})"
-
 
 # db.drop_all()
 # db.create_all()
@@ -84,16 +107,7 @@ def store_database(database, value):
     with open(f"./json-database/{database}.json", 'w') as outfile:
         json.dump(value, outfile, indent=4)
 
-def generate_API_key(existing_users):
-    current_keys = []
-    for user in existing_users:
-        current_keys.append(user['key'])
-
-    temp_key = secrets.token_urlsafe(16)
-    while(temp_key in current_keys):
-        temp_key = secrets.token_urlsafe(16)
-
-def generate_API_key(existing_users):
+def generate_API_key():
     temp_key = secrets.token_urlsafe(16)
     while(len(User.query.filter_by(api_key=temp_key).all()) > 0):
         temp_key = secrets.token_urlsafe(16)
@@ -101,59 +115,49 @@ def generate_API_key(existing_users):
     return temp_key
 
 
-    
+
 #TODO: timezones
     
 
 
-#TODO: Store an acompanying hashmap of user ids to get users in O(1) time? or just switch to a proper database
 class Users(Resource):
     def get(self):
         parser = reqparse.RequestParser()  # initialize
         parser.add_argument('key', required=True , location="headers", help="API KEY REQUIRED")  # add header
         args = parser.parse_args()
 
-        users = load_database('users')
-
-        current_user = None
-        for user in users:
-            if(user['key'] == args['key']):
-                current_user = user
-                break
+        current_user = User.query.filter_by(api_key=args['key']).first()
 
         if(current_user == None):
             return {'message': f"'{args['key']}' is an invalid API key"}, 401
-        return {'data': current_user}, 200  # return data and 200 OK code
+        return {'data': current_user.to_dict()}, 200  # return data and 200 OK code
 
 
     def post(self):
-        #TODO: adds a new user and returns them so that the api key can be saved by the sender
         parser = reqparse.RequestParser()  # initialize
-        #parser.add_argument('key', required=True , location="headers", help="API KEY REQUIRED")  # add header
-        parser.add_argument('name', required=True)  # add args
+        parser.add_argument('username', required=True)  # add args
+        parser.add_argument('email', required=True)  # add args
+        parser.add_argument('password', required=True)  # add args
         parser.add_argument('tz', required=False)  # add args
         args = parser.parse_args()
 
-        users = load_database('users')
+        new_user = User(
+            api_key = generate_API_key(),
+            username = args['username'],
+            email = args['email'],
+            password = args['password'],
+            time_zone = args['tz'] or "UTC",
 
-        current_user = {
-            "id" : users[-1]['id']+1 if len(users)>0 else 0, #TODO: change ternary to ORs
-            "username" : args['name'],
-            "tz" : args['tz'] if args.get('tz') is not None else None, #TODO: change ternary to ORs
-            "key" : generate_API_key(users),
-            "timers" : [],
-            "projects" : [],
-        }
-        users.append(current_user)
+            admin = 1,
+        )
+        db.session.add(new_user)
+        db.session.commit()
 
-        store_database('users', users)
-
-        return {'data': current_user}, 200  # return data and 200 OK code
+        return {'data': new_user.to_dict()}, 200  # return data and 200 OK code
 
 
 
 class Timers(Resource):
-    # methods go here
     def post(self):
         parser = reqparse.RequestParser()  # initialize
         parser.add_argument('key', required=True , location="headers", help="API KEY REQUIRED")  # add header
@@ -164,53 +168,46 @@ class Timers(Resource):
         parser.add_argument('end', required=False)  # add args
         args = parser.parse_args()
 
-        users = load_database('users')
-        timers = load_database('timers')
-
-        current_user = None
-        for user in users:
-            if(user['key'] == args['key']):
-                current_user = user
-                break
+        current_user = User.query.filter_by(api_key=args['key']).first()
         if(current_user == None):
             return {'message': f"'{args['key']}' is an invalid API key"}, 401
 
-        running_timer = None
-        if(args.get('timer_id') is not None):
-            for timer in timers:
-                print(timer['id'], int(args['timer_id']), timer['id'] == args['timer_id'])
-                if(timer['id'] == args['timer_id']):
-                    running_timer = timer
-                    break
-            print(running_timer)
-            if(running_timer == None):
-                return {'message': f"'{args['timer_id']}' is an invalid timer id"}, 401
+        running_timer = Time_Entry.query.filter_by(id=args['timer_id'], running=1).first()
+        if(args['timer_id'] is not None and running_timer == None):
+            return {'message': f"'{args['timer_id']}' is an invalid timer id"}, 401
 
         return_value = None
         if(args['start'] == None and args['end'] == None and args['timer_id'] == None):  # they gave a blank timer
-            current_timer = {
-                "id" : timers[-1]['id']+1 if len(timers)>0 else 0, #TODO: change ternary to ORs
-                "user_id" : current_user['id'],
-                "description" : args['description'] if args.get('description') is not None else None, #TODO: change ternary to ORs
-                "start" : datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S"),
-                "end" : None,
-                "project_id" : args['project_id'] if args.get('project_id') is not None else None #TODO: change ternary to ORs
-            }
-            timers.append(current_timer)
-            current_user['timers'].append(current_timer['id'])
-            return_value = current_timer
+            if(running_timer is not None):
+                return {'message': "You already have a running timer!"}, 401
+
+            new_timer = Time_Entry(
+                user_id = current_user.id,
+                project_id = args.get('project_id'),
+                description = args.get('description'),
+                start = datetime.utcnow(), #.strftime("%m/%d/%Y, %H:%M:%S")
+                running = 1,
+            )
+            db.session.add(new_timer)
+            db.session.commit()
+            return_value = new_timer
 
         elif(args['timer_id'] is not None and args['end'] is not None and running_timer is not None): # they are ending an exiting timer
-            running_timer['end'] = args['end']
+            running_timer.stop = args['end']
+            running_timer.running = 0
+            db.session.commit()
+            return_value = running_timer
+        
+        elif(args['timer_id'] is not None and running_timer is not None):
+            running_timer.stop = datetime.utcnow()
+            running_timer.running = 0
+            db.session.commit()
             return_value = running_timer
 
         else: #TODO: check for more valid cases?
             return {'message': "Invalid timer start/end inputs"}, 400
 
-        store_database('timers', timers)
-        store_database('users', users)
-
-        return {'data': return_value}, 200  # return data and 200 OK code
+        return {'data': return_value.to_dict()}, 200  # return data and 200 OK code
 
 
     #TODO: get for timers in date range?
