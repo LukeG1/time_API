@@ -5,7 +5,7 @@ import pandas as pd
 import json
 import ast
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import pytz
 from flask_login import UserMixin
 from pprint import pprint as pprint
@@ -40,6 +40,7 @@ class User(db.Model, UserMixin):
             "api_key" : self.api_key,
             "time_zone" : self.time_zone,
             "admin" : self.admin,
+            "time_entries" : list(map(str, self.time_entries))  #TODO: Delete this, will get too big to display to the user
         }
 
     def __str__(self):
@@ -165,7 +166,7 @@ class Timers(Resource):
     def post(self):
         parser = reqparse.RequestParser()  # initialize
         parser.add_argument('key', required=True , location="headers", help="API KEY REQUIRED")  # add header
-        parser.add_argument('timer_id', required=False, type=int)  # add args
+        parser.add_argument('time_entry_id', required=False, type=int)  # add args
         parser.add_argument('description', required=False)  # add args
         parser.add_argument('project_id', required=False)  # add args
         parser.add_argument('start', required=False)  # add args
@@ -176,12 +177,12 @@ class Timers(Resource):
         if(current_user == None):
             return {'message': f"'{args['key']}' is an invalid API key"}, 401
 
-        running_timer = Time_Entry.query.filter_by(id=args['timer_id'], running=1).first()
-        if(args['timer_id'] is not None and running_timer == None):
-            return {'message': f"'{args['timer_id']}' is an invalid timer id"}, 401
+        running_timer = Time_Entry.query.filter_by(id=args['time_entry_id'], running=1).first()
+        if(args['time_entry_id'] is not None and running_timer == None):
+            return {'message': f"'{args['time_entry_id']}' is an invalid timer id"}, 401
 
         return_value = None
-        if(args['start'] == None and args['end'] == None and args['timer_id'] == None):  # they gave a blank timer
+        if(args['start'] == None and args['end'] == None and args['time_entry_id'] == None):  # they gave a blank timer
             if(Time_Entry.query.filter_by(running=1).first() is not None):
                 return {'message': "You already have a running timer!"}, 401
 
@@ -197,13 +198,13 @@ class Timers(Resource):
             return_value = new_timer
 
         #TODO: This case is dumb, replace it with a manual time entry, deal with mods later
-        elif(args['timer_id'] is not None and args['end'] is not None and running_timer is not None): # they are ending an exiting timer
+        elif(args['time_entry_id'] is not None and args['end'] is not None and running_timer is not None): # they are ending an exiting timer
             running_timer.stop = args['end']
             running_timer.running = 0
             db.session.commit()
             return_value = running_timer
         
-        elif(args['timer_id'] is not None and running_timer is not None):
+        elif(args['time_entry_id'] is not None and running_timer is not None):
             running_timer.stop = datetime.utcnow()
             running_timer.running = 0
             db.session.commit()
@@ -221,8 +222,8 @@ class Timers(Resource):
         parser.add_argument('key', required=True , location="headers", help="API KEY REQUIRED")  # add header
         parser.add_argument('project_id', required=False)  # add args
         parser.add_argument('mode', required=False)
-        parser.add_argument('start_date', required=False)  # add args
-        parser.add_argument('end_date', required=False)  # add args
+        parser.add_argument('start_time', required=False)  # add args
+        parser.add_argument('stop_time', required=False)  # add args
         args = parser.parse_args()
 
         current_user = User.query.filter_by(api_key=args['key']).first()
@@ -234,15 +235,57 @@ class Timers(Resource):
             timer = Time_Entry.query.filter_by(user_id=current_user.id, running=1).first()
             if(timer is not None):
                 return_value = timer.to_dict()
-        #TODO: modes 1 and 2 for start and end ranges USE THE QUERY .FILTER COMMAND
-        elif(args.get('mode') == '1'): # since the start time
-            pass
+
+        elif(args.get('mode') == '1'): # since the start time 
+            try:
+                if(type(args.get('start_time')) == str):
+                    if(", " in args.get('start_time')):
+                        start_time = datetime.strptime(args.get('start_time'), "%m/%d/%Y, %H:%M:%S")
+                    else:
+                        start_time = datetime.strptime(args.get('start_time'), "%m/%d/%Y")
+                else:
+                    return {'message': "Invalid datetime format"}, 400
+            except ValueError:
+                return {'message': "Invalid datetime format"}, 400
+            return_value = Time_Entry.query.filter(
+                Time_Entry.user_id == current_user.id, 
+                Time_Entry.start >= start_time, 
+            ).all()
+            return_value = list(map(Time_Entry.to_dict, return_value))
+
         elif(args.get('mode') == '2'): # between the start and end times
-            pass
+            try:
+                if(type(args.get('start_time')) == str):
+                    if(", " in args.get('start_time')):
+                        start_time = datetime.strptime(args.get('start_time'), "%m/%d/%Y, %H:%M:%S")
+                    else:
+                        start_time = datetime.strptime(args.get('start_time'), "%m/%d/%Y")
+                else:
+                    return {'message': "Invalid datetime format"}, 400
+            except ValueError:
+                return {'message': "Invalid datetime format"}, 400
+            try:
+                if(type(args.get('stop_time')) == str):
+                    if(", " in args.get('stop_time')):
+                        stop_time = datetime.strptime(args.get('stop_time'), "%m/%d/%Y, %H:%M:%S")
+                    else:
+                        stop_time = datetime.strptime(args.get('stop_time'), "%m/%d/%Y")
+                        stop_time += timedelta(hours=23, minutes=59, seconds=59)
+                else:
+                    return {'message': "Invalid datetime format"}, 400
+            except ValueError:
+                return {'message': "Invalid datetime format"}, 400
+
+            return_value = Time_Entry.query.filter(
+                Time_Entry.user_id == current_user.id, 
+                Time_Entry.start >= start_time, 
+                Time_Entry.stop <= stop_time
+            ).all()
+            return_value = list(map(Time_Entry.to_dict, return_value))
+
         elif(args.get('mode') == '3'): # everything
-            return_value = []
-            for timer in Time_Entry.query.filter_by(user_id=current_user.id).all():
-                return_value.append(timer.to_dict())
+            return_value = Time_Entry.query.filter_by(user_id=current_user.id).all()
+            return_value = list(map(Time_Entry.to_dict, return_value))
 
         return {'data': return_value}, 200  # return data and 200 OK code
 
@@ -271,8 +314,8 @@ class Projects(Resource):
 
 api.add_resource(Users, '/users')  # '/users' is our entry point for Users
 api.add_resource(Projects, '/projects')  # and '/projects' is our entry point for Projects
-api.add_resource(Tasks, '/tasks')  # and '/tasks' is our entry point for Tasks
-api.add_resource(Timers, '/timers')  # and '/locations' is our entry point for Locations
+api.add_resource(Tasks, '/task_entries')  # and '/tasks' is our entry point for Tasks
+api.add_resource(Timers, '/time_entries')  # and '/locations' is our entry point for Locations
 
 
 
