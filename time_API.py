@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask
 from flask_restful import Resource, Api, reqparse
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd
@@ -53,6 +53,7 @@ class Project(db.Model):
     time_entries = db.relationship('Time_Entry', backref='project', lazy=True)
     task_entries = db.relationship('Task_Entry', backref='project', lazy=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    #TODO: archived attribute (could invert to active)
 
     def __str__(self):
         return f"PROJECT({self.id},'{self.name}', '{User.query.get(self.user_id).username}')"
@@ -65,6 +66,7 @@ class Time_Entry(db.Model):
     duration = db.Column(db.Integer, nullable=True, default=0) #seconds
     running = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
 
+    #TODO: link to tasks
     #task_id = db.Column(db.Integer, db.ForeignKey('Task_Entry.id'), nullable=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -119,8 +121,7 @@ def generate_API_key():
 
 
 
-#TODO: timezones
-    
+#TODO: DOCUMENTATION, I will forget how all this works eventually, probably make a readme
 
 
 class Users(Resource):
@@ -159,7 +160,7 @@ class Users(Resource):
         return {'data': new_user.to_dict()}, 200  # return data and 200 OK code
 
 
-
+#TODO: this is stated in other places but I need to deal with how I want to recieve datetimes, probably iso string
 class Timers(Resource):
     def post(self):
         parser = reqparse.RequestParser()  # initialize
@@ -195,6 +196,7 @@ class Timers(Resource):
             db.session.commit()
             return_value = new_timer
 
+        #TODO: This case is dumb, replace it with a manual time entry, deal with mods later
         elif(args['timer_id'] is not None and args['end'] is not None and running_timer is not None): # they are ending an exiting timer
             running_timer.stop = args['end']
             running_timer.running = 0
@@ -232,7 +234,7 @@ class Timers(Resource):
             timer = Time_Entry.query.filter_by(user_id=current_user.id, running=1).first()
             if(timer is not None):
                 return_value = timer.to_dict()
-        #TODO: modes 1 and 2 for start and end ranges
+        #TODO: modes 1 and 2 for start and end ranges USE THE QUERY .FILTER COMMAND
         elif(args.get('mode') == '1'): # since the start time
             pass
         elif(args.get('mode') == '2'): # between the start and end times
@@ -247,17 +249,19 @@ class Timers(Resource):
 
 
 #TODO: tasks as a whole
-#       create task
-#       get tasks
-#       completete task
-
-
-
-#TODO: get and post for project completion
-class Projects(Resource):
+class Tasks(Resource):
     def post(self):
         pass
 
+    def get(self):
+        pass
+
+
+
+#TODO: get and post for project creation
+class Projects(Resource):
+    def post(self):
+        pass
 
     def get(self):
         # if a project id is passed get that one otherwise get all of them
@@ -266,14 +270,14 @@ class Projects(Resource):
 
 
 api.add_resource(Users, '/users')  # '/users' is our entry point for Users
-api.add_resource(Timers, '/timers')  # and '/locations' is our entry point for Locations
 api.add_resource(Projects, '/projects')  # and '/projects' is our entry point for Projects
+api.add_resource(Tasks, '/tasks')  # and '/tasks' is our entry point for Tasks
+api.add_resource(Timers, '/timers')  # and '/locations' is our entry point for Locations
 
 
 
 if __name__ == '__main__':
     app.run(debug = True)  # run our Flask app
-
 
 
 
