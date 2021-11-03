@@ -102,8 +102,8 @@ class Time_Entry(db.Model):
             "stop" : stop_display.replace(tzinfo=pytz.utc).astimezone(tz).strftime("%m/%d/%Y, %H:%M:%S"),
         }
 
-db.drop_all()
-db.create_all()
+# db.drop_all()
+# db.create_all()
 #------------------------------------------------------------------------------------------ actual website
 
 def load_database(database):
