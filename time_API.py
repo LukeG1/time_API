@@ -82,7 +82,6 @@ class Time_Entry(db.Model):
     duration = db.Column(db.Integer, nullable=True, default=0) #seconds
     running = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
 
-    #TODO: link to tasks
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     task_entry_id = db.Column(db.Integer, db.ForeignKey(Task_Entry.id), nullable=True)
@@ -161,7 +160,6 @@ class Users(Resource):
         return {'data': new_user.to_dict()}, 200  # return data and 200 OK code
 
 
-#TODO: this is stated in other places but I need to deal with how I want to recieve datetimes, probably iso string
 class Timers(Resource):
     def post(self):
         parser = reqparse.RequestParser()  # initialize
@@ -216,7 +214,6 @@ class Timers(Resource):
         return {'data': return_value.to_dict()}, 200  # return data and 200 OK code
 
 
-    #TODO: get for timers in date range?
     def get(self):
         parser = reqparse.RequestParser()  # initialize
         parser.add_argument('key', required=True , location="headers", help="API KEY REQUIRED")  # add header

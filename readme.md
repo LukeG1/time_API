@@ -19,11 +19,12 @@
          3. manual entry coming soon
    2. get
       1. this is how you can see your times
-         1. mode = 0
+         1. Date strings: m/d/y, h:m:s OR m/d/y
+         2. mode = 0
             1. returns the running timer
-         2. mode = 1
-            1. returns the timers since a start date (coming soon)
-         3. mode = 2
-            1. returns the timers within a date range (coming soon)
-         4. mode = 3
+         3. mode = 1
+            1. returns the timers since a start date
+         4. mode = 2
+            1. returns the timers within a date range
+         5. mode = 3
             1. returns all timers belonging to the user
