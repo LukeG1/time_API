@@ -12,7 +12,7 @@ from pprint import pprint as pprint
 
 app = Flask(__name__)
 api = Api(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site003.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site006.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -24,7 +24,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(), unique=True, nullable=False)
     password = db.Column(db.String(), nullable=False)
     api_key = db.Column(db.String(), nullable=False, unique=True)
-    time_zone = db.Column(db.String(), nullable=False, default=0) #ex: EST
+    time_zone = db.Column(db.String(), nullable=False, default=0) #ex: US/Eastern
     admin = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
 
     projects = db.relationship('Project', backref='user', lazy=True)
@@ -50,14 +50,29 @@ class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), unique=True, nullable=False)
     color = db.Column(db.String(), nullable=False, default="#292929") #hex color
+    active = db.Column(db.Integer, nullable=False, default=1) #bool (0 or 1)
 
     time_entries = db.relationship('Time_Entry', backref='project', lazy=True)
     task_entries = db.relationship('Task_Entry', backref='project', lazy=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    #TODO: archived attribute (could invert to active)
 
     def __str__(self):
         return f"PROJECT({self.id},'{self.name}', '{User.query.get(self.user_id).username}')"
+
+class Task_Entry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(), unique=True, nullable=True)
+    due_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) #iso
+    do_date = db.Column(db.DateTime, nullable=True) #iso
+    priority = db.Column(db.Integer, nullable=False, default=1) #range(1 - 4)
+    completed = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
+
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    time_entries = db.relationship('Time_Entry', backref='task_entry', lazy=True)
+
+    def __str__(self):
+        return f"TASK_ENTRY({self.id},'{self.description}',{self.due_date})"
 
 class Time_Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -68,9 +83,9 @@ class Time_Entry(db.Model):
     running = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
 
     #TODO: link to tasks
-    #task_id = db.Column(db.Integer, db.ForeignKey('Task_Entry.id'), nullable=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    task_entry_id = db.Column(db.Integer, db.ForeignKey(Task_Entry.id), nullable=True)
 
     def __str__(self):
         return f"TIME_ENTRY({self.id},'{self.description}',{self.duration})"
@@ -88,23 +103,8 @@ class Time_Entry(db.Model):
             "stop" : stop_display.replace(tzinfo=pytz.utc).astimezone(tz).strftime("%m/%d/%Y, %H:%M:%S"),
         }
 
-class Task_Entry(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String(), unique=True, nullable=True)
-    due_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) #iso
-    do_date = db.Column(db.DateTime, nullable=True) #iso
-    priority = db.Column(db.Integer, nullable=False, default=1) #range(1 - 4)
-    completed = db.Column(db.Integer, nullable=False, default=0) #bool (0 or 1)
-
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    #time_entries = db.relationship('Time_Entry', backref='task_entry', lazy=True)
-
-    def __str__(self):
-        return f"TASK_ENTRY({self.id},'{self.description}',{self.due_date})"
-
-# db.drop_all()
-# db.create_all()
+db.drop_all()
+db.create_all()
 #------------------------------------------------------------------------------------------ actual website
 
 def load_database(database):
