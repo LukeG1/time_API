@@ -96,6 +96,7 @@ class Time_Entry(db.Model):
             "id" : self.id,
             "project_id" : self.project_id,
             "user_id" : self.user_id,
+            "task_entry_id" : self.task_entry_id,
             "description" : self.description,
             "running" : self.running,
             "start" : self.start.replace(tzinfo=pytz.utc).astimezone(tz).strftime("%m/%d/%Y, %H:%M:%S"),
@@ -114,7 +115,7 @@ def store_database(database, value):
 
 def generate_API_key():
     temp_key = secrets.token_urlsafe(16)
-    while(len(User.query.filter_by(api_key=temp_key).all()) > 0):
+    while(User.query.filter_by(api_key=temp_key).first() is not None):
         temp_key = secrets.token_urlsafe(16)
 
     return temp_key
@@ -122,7 +123,6 @@ def generate_API_key():
 
 
 #TODO: DOCUMENTATION, I will forget how all this works eventually, probably make a readme
-
 
 class Users(Resource):
     def get(self):
@@ -136,7 +136,7 @@ class Users(Resource):
             return {'message': f"'{args['key']}' is an invalid API key"}, 401
         return {'data': current_user.to_dict()}, 200  # return data and 200 OK code
 
-
+    #TODO: enforce uniqueness
     def post(self):
         parser = reqparse.RequestParser()  # initialize
         parser.add_argument('username', required=True)  # add args
@@ -158,6 +158,12 @@ class Users(Resource):
         db.session.commit()
 
         return {'data': new_user.to_dict()}, 200  # return data and 200 OK code
+    
+
+    #TODO: implement put for updating user data
+    def put(self):
+        pass
+
 
 
 class Timers(Resource):
