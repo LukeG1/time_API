@@ -31,7 +31,7 @@ export class StopTimeEntry extends React.Component {
 					src={startSVG}
 					width="30"
 					height="30"
-					class="d-inline-block align-top text-success"
+					className="d-inline-block align-top text-success"
 					alt="Stop time entry"
 				></img>
 			</button>
