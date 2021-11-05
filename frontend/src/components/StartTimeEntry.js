@@ -1,4 +1,5 @@
 import React from "react";
+import startSVG from "../start.svg";
 
 export class StartTimeEntry extends React.Component {
 	send_time_entry = () => {
@@ -29,18 +30,25 @@ export class StartTimeEntry extends React.Component {
 
 	render() {
 		return (
-			<div>
+			<div className="">
 				<input
 					type="text"
-					className="form-control mr-sm-2"
+					className="form-control"
 					placeholder="description..."
 					id="time_entry_description"
 				/>
 				<button
-					className="btn btn-outline-success my-2 my-sm-0"
+					// btn-outline-success
+					className="btn my-2 my-sm-0"
 					onClick={this.send_time_entry}
 				>
-					Start Time entry!
+					<img
+						src={startSVG}
+						width="30"
+						height="30"
+						class="d-inline-block align-top text-success"
+						alt="Start time entry!"
+					></img>
 				</button>
 			</div>
 		);

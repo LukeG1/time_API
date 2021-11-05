@@ -1,4 +1,5 @@
 import React from "react";
+import startSVG from "../stop.svg";
 
 export class StopTimeEntry extends React.Component {
 	send_time_entry = () => {
@@ -26,7 +27,13 @@ export class StopTimeEntry extends React.Component {
 				className="btn btn-outline-danger my-2 my-sm-0"
 				onClick={this.send_time_entry}
 			>
-				Stop the timer
+				<img
+					src={startSVG}
+					width="30"
+					height="30"
+					class="d-inline-block align-top text-success"
+					alt="Stop time entry"
+				></img>
 			</button>
 		);
 	}
