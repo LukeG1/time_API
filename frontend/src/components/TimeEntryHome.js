@@ -1,6 +1,13 @@
 import React from "react";
 
 export class TimeEntryHome extends React.Component {
+	duration = (props) => {
+		var start = Date.parse(props.data.start);
+		var stop = Date.parse(props.data.stop);
+		var dur = new Date(stop - start);
+		return dur.toISOString().substr(11, 8);
+	};
+
 	render() {
 		return (
 			<div className="card">
@@ -15,7 +22,8 @@ export class TimeEntryHome extends React.Component {
 						{this.props.data.id}
 					</h6>
 					<p className="card-text col">
-						{this.props.data.start} - {this.props.data.stop}
+						{/* {this.props.data.start} - {this.props.data.stop} */}
+						{this.duration(this.props)}
 					</p>
 				</div>
 			</div>

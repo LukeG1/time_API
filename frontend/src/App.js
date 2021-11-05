@@ -63,16 +63,27 @@ export class App extends React.Component {
 					on_stop_timer={this.handleStopTimeEntry}
 					data={this.state.curent_time}
 				/>
-
-				{this.state.recent != null ? (
-					<div>
-						{this.state.recent.map(function (object, i) {
-							return <TimeEntryHome data={object} key={i} />;
-						})}
+				<div className="row">
+					<div id="time-tracking" className="col">
+						{this.state.recent != null ? (
+							<div>
+								{this.state.recent.map(function (object, i) {
+									return (
+										<TimeEntryHome
+											data={object}
+											key={object.id}
+										/>
+									);
+								})}
+							</div>
+						) : (
+							<h1>Start tracking to see something here</h1>
+						)}
 					</div>
-				) : (
-					<h1>Start tracking to see something here</h1>
-				)}
+					<div id="task-management" className="col-5">
+						<h1>TASK MANAGEMENT WILL GO HERE</h1>
+					</div>
+				</div>
 			</div>
 		);
 	}
