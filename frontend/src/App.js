@@ -7,7 +7,26 @@ import { TimeEntryHome } from "./components/TimeEntryHome";
 export class App extends React.Component {
 	state = {
 		curent_time: null,
+		recent: null,
 	};
+
+	get_recent_time_entries = () => {
+		fetch("https://2020gabel.pythonanywhere.com/time_entries?mode=3", {
+			mode: "cors",
+			method: "GET",
+			headers: {
+				key: "kiE3eTPhGN_8q3CpCvnRpQ",
+			},
+		})
+			.then((res) => res.json())
+			.then((data) => {
+				this.setState({
+					recent: data.data.reverse(),
+				});
+			})
+			.catch(console.log);
+	};
+
 	componentDidMount() {
 		fetch("https://2020gabel.pythonanywhere.com/time_entries", {
 			mode: "cors",
@@ -23,6 +42,7 @@ export class App extends React.Component {
 				});
 			})
 			.catch(console.log);
+		this.get_recent_time_entries();
 	}
 
 	handleTimeEntry = (time_data) => {
@@ -30,6 +50,7 @@ export class App extends React.Component {
 	};
 	handleStopTimeEntry = (time_data) => {
 		this.setState({ curent_time: null });
+		this.get_recent_time_entries();
 	};
 
 	render() {
@@ -40,10 +61,15 @@ export class App extends React.Component {
 					on_stop_timer={this.handleStopTimeEntry}
 					data={this.state.curent_time}
 				/>
-				{this.state.curent_time != null ? (
-					<TimeEntryHome data={this.state.curent_time} />
+
+				{this.state.recent != null ? (
+					<div>
+						{this.state.recent.map(function (object, i) {
+							return <TimeEntryHome data={object} key={i} />;
+						})}
+					</div>
 				) : (
-					<h1>No Time Entry Running</h1>
+					<h1>Start tracking to see something here</h1>
 				)}
 			</div>
 		);

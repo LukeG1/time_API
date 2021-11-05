@@ -3,6 +3,16 @@ import { StartTimeEntry } from "./StartTimeEntry";
 import { StopTimeEntry } from "./StopTimeEntry";
 
 export class Navbar extends React.Component {
+	componentDidMount() {
+		this.interval = setInterval(
+			() => this.setState({ time: Date.now() }),
+			1000
+		);
+	}
+	componentWillUnmount() {
+		clearInterval(this.interval);
+	}
+
 	on_start_timer = (data) => {
 		this.props.on_start_timer(data);
 	};
@@ -12,15 +22,20 @@ export class Navbar extends React.Component {
 	render() {
 		function show_curent_timer(props) {
 			if (props.data != null) {
+				var now = new Date();
+				//now.toLocaleTimeString();
+				var start = Date.parse(props.data.start);
+				var dur = new Date((now.getTime() - start) * 1000);
 				return (
 					<div className="row">
 						{props.data.description != null ? (
-							<p className="col-md-3">{props.data.description}</p>
+							<p className="col">{props.data.description}</p>
 						) : (
-							<p className="col-md-3">(no description)</p>
+							<p className="col">(no description)</p>
 						)}
-						<p className="col-md-3">{props.data.id}</p>
-						<p className="col-md-3">{props.data.start}</p>
+						<p className="col">{props.data.id}</p>
+						<p className="col">{props.data.start}</p>
+						<p className="col">{dur.toISOString().substr(11, 8)}</p>
 					</div>
 				);
 			}
@@ -32,7 +47,6 @@ export class Navbar extends React.Component {
 				{/* <a className="navbar-brand">Time Tracker</a> */}
 				<ul className="navbar-nav mr-auto">
 					<li className="nav-item active">
-						{/* CURRENT TIME ENTRY */}
 						{show_curent_timer(this.props)}
 					</li>
 				</ul>
