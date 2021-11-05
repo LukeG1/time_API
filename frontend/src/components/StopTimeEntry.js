@@ -24,7 +24,7 @@ export class StopTimeEntry extends React.Component {
 	render() {
 		return (
 			<button
-				className="btn btn-outline-danger my-2 my-sm-0"
+				className="btn btn-outline-danger my-2 my-sm-0 bg-light"
 				onClick={this.send_time_entry}
 			>
 				<img

@@ -1,6 +1,7 @@
 import React from "react";
 import "./App.css";
 import { Navbar } from "./components/NavBar";
+import { SideBar } from "./components/SideBar";
 import { TimeEntryHome } from "./components/TimeEntryHome";
 
 //MY TIME TRACKING API KEY: kiE3eTPhGN_8q3CpCvnRpQ
@@ -56,6 +57,7 @@ export class App extends React.Component {
 	render() {
 		return (
 			<div className="App">
+				<SideBar />
 				<Navbar
 					on_start_timer={this.handleTimeEntry}
 					on_stop_timer={this.handleStopTimeEntry}

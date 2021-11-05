@@ -33,13 +33,19 @@ export class StartTimeEntry extends React.Component {
 			<div className="">
 				<input
 					type="text"
-					className="form-control"
+					className="form-control bg-light"
 					placeholder="description..."
 					id="time_entry_description"
+					style={{
+						outline: "0",
+						borderWidth: "0 0 2px",
+						borderColor: "#5cb85c",
+						borderRadius: "0",
+					}}
 				/>
 				<button
 					// btn-outline-success
-					className="btn my-2 my-sm-0"
+					className="btn my-2 my-sm-0 bg-light"
 					onClick={this.send_time_entry}
 				>
 					<img

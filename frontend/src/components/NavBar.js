@@ -19,6 +19,7 @@ export class Navbar extends React.Component {
 	on_stop_timer = (data) => {
 		this.props.on_stop_timer(data);
 	};
+
 	render() {
 		function show_curent_timer(props) {
 			if (props.data != null) {
@@ -43,7 +44,7 @@ export class Navbar extends React.Component {
 		}
 
 		return (
-			<nav className="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+			<nav className="navbar navbar-expand-lg navbar-light sticky-top bg-light">
 				{/* <a className="navbar-brand">Time Tracker</a> */}
 				<ul className="navbar-nav mr-auto">
 					<li className="nav-item active">
