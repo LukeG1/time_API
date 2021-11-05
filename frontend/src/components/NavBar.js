@@ -25,7 +25,7 @@ export class Navbar extends React.Component {
 				var now = new Date();
 				//now.toLocaleTimeString();
 				var start = Date.parse(props.data.start);
-				var dur = new Date((now.getTime() - start) * 1000);
+				var dur = new Date((now.getTime() - start) * 1); // * 1000
 				return (
 					<div className="row">
 						{props.data.description != null ? (
