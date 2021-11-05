@@ -3,7 +3,7 @@ import React from "react";
 export class StartTimeEntry extends React.Component {
 	send_time_entry = () => {
 		var descString = "";
-		if (document.getElementById("time_entry_description").value != "") {
+		if (document.getElementById("time_entry_description").value !== "") {
 			descString =
 				"?description=" +
 				document.getElementById("time_entry_description").value;

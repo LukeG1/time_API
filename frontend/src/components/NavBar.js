@@ -29,9 +29,7 @@ export class Navbar extends React.Component {
 
 		return (
 			<nav className="navbar navbar-expand-lg navbar-light bg-light sticky-top">
-				<a className="navbar-brand" href="#">
-					Time Tracker
-				</a>
+				{/* <a className="navbar-brand">Time Tracker</a> */}
 				<ul className="navbar-nav mr-auto">
 					<li className="nav-item active">
 						{/* CURRENT TIME ENTRY */}
