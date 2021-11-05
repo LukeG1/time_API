@@ -1,26 +1,24 @@
-import logo from './logo.svg';
+import React from "react";
 import './App.css';
+import { Counter } from "./components/Counter";
+import { TimeEntryHome } from "./components/TimeEntryHome";
+//import { Header } from "./components/Header";
 
+
+//<Header title="hello from App" />
 function App() {
   return (
     <div className="App">
-    <header className="App-header">
-      <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          I am testing that it really updates when I push
-        </p>
-        <a
-          className="App-link" 
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      
+      <Counter startingValue={100}/>
+      <Counter startingValue={-100}/>
+      <TimeEntryHome 
+        name = {"this is a test"}
+        project = {"random project"}
+        start = {Date()}
+        end = {Date()}
+      />
+
     </div>
   );
 }
