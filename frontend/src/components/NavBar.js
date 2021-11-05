@@ -23,7 +23,7 @@ export class Navbar extends React.Component {
 		function show_curent_timer(props) {
 			if (props.data != null) {
 				var now = new Date();
-				//now.toLocaleTimeString();
+				now.toLocaleTimeString();
 				var start = Date.parse(props.data.start);
 				var dur = new Date((now.getTime() - start) * 1); // * 1000
 				return (
