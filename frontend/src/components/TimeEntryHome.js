@@ -37,37 +37,36 @@ export class TimeEntryHome extends React.Component {
 						display: "flex",
 						overflow: "hidden",
 						styleType: "none",
-						justifyContent: "flex-start",
-						alignItems: "center",
 						alignContent: "center",
 					}}
 				>
-					<p style={{ paddingRight: 20 }}>
-						{this.props.data.description !== null ? (
-							<b>{this.props.data.description}</b>
-						) : (
-							<p>(no description)</p>
-						)}
-					</p>
-					<p color="red.500"> BASIC MUSICIANSHIP: CLASS PIANO</p>
-
+					<div
+						className="row"
+						style={{
+							justifyItems: "center",
+						}}
+					>
+						<div style={{ paddingRight: 20 }} className="col">
+							{this.props.data.description !== null ? (
+								<b>{this.props.data.description}</b>
+							) : (
+								<p>(no description)</p>
+							)}
+						</div>
+						<p style={{ color: "#db301d" }} className="col-md-50">
+							{" "}
+							BASIC MUSICIANSHIP: CLASS PIANO
+						</p>
+					</div>
 					<div
 						style={{
 							marginLeft: "auto",
 							display: "flex",
 							overflow: "hidden",
 							styleType: "none",
-							justifyContent: "flex-start",
-							alignItems: "center",
 						}}
 					>
-						<p
-							pr={0}
-							display="grid"
-							justifyContent="flex-end"
-							ml="auto"
-							alignItems="flex-end"
-						>
+						<p pr={0} display="grid" ml="auto">
 							{" "}
 							{this.start_time(this.props)} -
 							{this.stop_time(this.props)}
