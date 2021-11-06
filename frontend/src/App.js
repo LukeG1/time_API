@@ -2,9 +2,9 @@ import React from "react";
 import "./App.css";
 import { Navbar } from "./components/NavBar";
 import { TimeEntryHome } from "./components/TimeEntryHome";
-import SideNav, { NavItem } from "@trendmicro/react-sidenav";
-import "@trendmicro/react-sidenav/dist/react-sidenav.css";
-import { BsHouse, BsBook, BsPieChart, BsPerson } from "react-icons/bs";
+//import SideNav, { NavItem } from "@trendmicro/react-sidenav";
+//import "@trendmicro/react-sidenav/dist/react-sidenav.css";
+//import { BsHouse, BsBook, BsPieChart, BsPerson } from "react-icons/bs";
 
 //MY TIME TRACKING API KEY: kiE3eTPhGN_8q3CpCvnRpQ
 export class App extends React.Component {
@@ -63,7 +63,7 @@ export class App extends React.Component {
 		//style={{backgroundColor: "#"}}
 		return (
 			<div className="App">
-				<SideNav
+				{/* <SideNav
 					className="bg-light"
 					onSelect={(selected) => {
 						// Add your code here
@@ -93,7 +93,7 @@ export class App extends React.Component {
 							/>
 						</NavItem>
 					</SideNav.Nav>
-				</SideNav>
+				</SideNav> */}
 
 				<Navbar
 					on_start_timer={this.handleTimeEntry}
