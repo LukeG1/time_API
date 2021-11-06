@@ -53,9 +53,12 @@ export class TimeEntryHome extends React.Component {
 								<p>(no description)</p>
 							)}
 						</div>
-						<p style={{ color: "#db301d" }} className="col-md-50">
+						<p
+							style={{ color: this.props.data.project_color }}
+							className="col-md-50"
+						>
 							{" "}
-							BASIC MUSICIANSHIP: CLASS PIANO
+							{this.props.data.project_name}
 						</p>
 					</div>
 					<div

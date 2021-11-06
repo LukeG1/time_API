@@ -13,6 +13,7 @@ export class App extends React.Component {
 		this.state = {
 			curent_time: null,
 			recent: null,
+			project_data: [],
 		};
 	}
 
@@ -27,7 +28,7 @@ export class App extends React.Component {
 			.then((res) => res.json())
 			.then((data) => {
 				this.setState({
-					recent: data.data.reverse(),
+					recent: data.data.slice(-1 * 10).reverse(),
 				});
 			})
 			.catch(console.log);
@@ -60,41 +61,8 @@ export class App extends React.Component {
 	};
 
 	render() {
-		//style={{backgroundColor: "#"}}
 		return (
 			<div className="App">
-				{/* <SideNav
-					className="bg-light"
-					onSelect={(selected) => {
-						// Add your code here
-						console.log(selected);
-					}}
-				>
-					<SideNav.Toggle />
-					<SideNav.Nav defaultSelected="home">
-						<NavItem eventKey="home">
-							<BsHouse
-								style={{ fontSize: "2em", color: "#2b2b2b" }}
-							/>
-						</NavItem>
-						<NavItem eventKey="projects">
-							<BsBook
-								style={{ fontSize: "2em", color: "#2b2b2b" }}
-							/>
-						</NavItem>
-						<NavItem eventKey="reports">
-							<BsPieChart
-								style={{ fontSize: "2em", color: "#2b2b2b" }}
-							/>
-						</NavItem>
-						<NavItem eventKey="profile">
-							<BsPerson
-								style={{ fontSize: "2em", color: "#2b2b2b" }}
-							/>
-						</NavItem>
-					</SideNav.Nav>
-				</SideNav> */}
-
 				<Navbar
 					on_start_timer={this.handleTimeEntry}
 					on_stop_timer={this.handleStopTimeEntry}

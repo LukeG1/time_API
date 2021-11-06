@@ -18,38 +18,7 @@ const dot = (color = "transparent") => ({
 	},
 });
 
-const colourOptions = [
-	{
-		value: "",
-		label: "No Project",
-		color: "#313131",
-	},
-	{
-		value: "ALGORITHM IMPLEMENTATION",
-		label: "ALGORITHM IMPLEMENTATION",
-		color: "#00B8D9",
-	},
-	{
-		value: "BASIC MUSICIANSHIP: CLASS PIANO",
-		label: "BASIC MUSICIANSHIP: CLASS PIANO",
-		color: "#0052CC",
-	},
-	{
-		value: "COMPARATIVE DIGITAL PRIVACIES",
-		label: "COMPARATIVE DIGITAL PRIVACIES",
-		color: "#5243AA",
-	},
-	{
-		value: "COMPUTER ORGANIZATION AND ASSEMBLY LANGUAGE",
-		label: "COMPUTER ORGANIZATION AND ASSEMBLY LANGUAGE",
-		color: "#FF5630",
-	},
-	{
-		value: "INTRODUCTION TO PHILOSOPHICAL PROBLEMS",
-		label: "INTRODUCTION TO PHILOSOPHICAL PROBLEMS",
-		color: "#FF8B00",
-	},
-];
+var colourOptions = [];
 
 const colourStyles = {
 	control: (styles) => ({ ...styles, backgroundColor: "white" }),
@@ -93,7 +62,37 @@ export class StartTimeEntry extends React.Component {
 		super(props);
 		this.state = {
 			inputValue: "",
+			project_id: "",
 		};
+	}
+
+	componentDidMount() {
+		fetch("https://2020gabel.pythonanywhere.com/projects", {
+			mode: "cors",
+			method: "GET",
+			headers: {
+				key: "kiE3eTPhGN_8q3CpCvnRpQ",
+			},
+		})
+			.then((res) => res.json())
+			.then((data) => {
+				colourOptions = [
+					{
+						value: "",
+						label: "No Project",
+						color: "#313131",
+					},
+				];
+				for (var i = 0; i < data.data.length; i++) {
+					colourOptions.push({
+						label: data.data[i].name,
+						value: data.data[i].name,
+						color: data.data[i].color,
+						id: data.data[i].id,
+					});
+				}
+			})
+			.catch(console.log);
 	}
 
 	handleInputChange = (newValue) => {
@@ -109,9 +108,20 @@ export class StartTimeEntry extends React.Component {
 				"?description=" +
 				document.getElementById("time_entry_description").value;
 		}
+		var projectString = "";
+		if (this.state.inputValue.value !== "" && this.state.inputValue.value) {
+			if (descString === "") {
+				projectString += "?";
+			} else {
+				projectString += "&";
+			}
+			projectString += "project_id=" + this.state.inputValue.id;
+		}
 
 		fetch(
-			"https://2020gabel.pythonanywhere.com/time_entries" + descString,
+			"https://2020gabel.pythonanywhere.com/time_entries" +
+				descString +
+				projectString,
 			{
 				mode: "cors",
 				method: "POST",
@@ -123,8 +133,11 @@ export class StartTimeEntry extends React.Component {
 			.then((res) => res.json())
 			.then((data) => {
 				this.props.on_start_timer(data.data);
-				console.log(data.data);
-				console.log(this.state);
+				console.log(
+					"https://2020gabel.pythonanywhere.com/time_entries" +
+						descString +
+						projectString
+				);
 			})
 			.catch(console.log);
 	};
