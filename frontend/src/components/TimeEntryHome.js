@@ -71,7 +71,7 @@ export class TimeEntryHome extends React.Component {
 					>
 						<p pr={0} display="grid" ml="auto">
 							{" "}
-							{this.start_time(this.props)} -
+							{this.start_time(this.props)} -{" "}
 							{this.stop_time(this.props)}
 						</p>
 						<p
