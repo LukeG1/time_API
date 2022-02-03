@@ -65,12 +65,6 @@ Headers:
 ### Time Entry
 
 #### /time_entries, POST
-Headers:
-```python
-{
-	"key" : "eOIKfY_mYM6MhcV4zXXzFA"
-}
-```
 Parameters:
 ```python
 {
@@ -113,9 +107,124 @@ Parameters:
     }
 }
 ```
-#### /time_entries, GET, mode 0
+#### /time_entries, GET, get currently running timer
 
+Parameters:
+```python
+{
+	"mode" : 0 # optional, defaults to 0
+}
+```
+**Response:**
+```python
+    "data": {
+        "id": 4,
+        "project_id": null,
+        "project_name": "(no project)",
+        "project_color": "#313131",
+        "user_id": 1,
+        "task_entry_id": null,
+        "description": "random timer",
+        "running": 1,
+        "start": "02/03/2022, 19:20:08",
+        "stop": "02/03/2022, 19:20:18"
+    }
+}
+```
+
+#### /time_entries, GET, get all timers since a start
+
+Parameters:
+```python
+{
+	"mode" : 1
+	"start_time" : "1/1/2022"
+	# datetimes should follow one of the following formats:
+	# "%m/%d/%Y, %H:%M:%S
+	# "%m/%d/%Y
+}
+```
+**Response:**
+```python
+{
+    "data": [
+        {
+            "id": 1,
+            "project_id": null,
+            "project_name": "(no project)",
+            "project_color": "#313131",
+            "user_id": 1,
+            "task_entry_id": null,
+            "description": null,
+            "running": 0,
+            "start": "02/03/2022, 16:03:20",
+            "stop": "02/03/2022, 16:04:17"
+        },
+        {
+            "id": 2,
+            "project_id": null,
+            "project_name": "(no project)",
+            "project_color": "#313131",
+            "user_id": 1,
+            "task_entry_id": null,
+            "description": "testing still",
+            "running": 0,
+            "start": "02/03/2022, 16:04:50",
+            "stop": "02/03/2022, 16:05:09"
+        },
+        ...
+    ]
+}
+```
+#### /time_entries, GET, get all timers between 2 dates
+
+Parameters:
+```python
+{
+	"mode" : 2
+	"start_time" : "1/1/2022"
+	"stop_time" : "2/3/2022, 18:30:00"
+	# datetimes should follow one of the following formats:
+	# "%m/%d/%Y, %H:%M:%S
+	# "%m/%d/%Y
+}
+```
+**Response:**
+```python
+{
+    "data": [
+        {
+            "id": 1,
+            "project_id": null,
+            "project_name": "(no project)",
+            "project_color": "#313131",
+            "user_id": 1,
+            "task_entry_id": null,
+            "description": null,
+            "running": 0,
+            "start": "02/03/2022, 16:03:20",
+            "stop": "02/03/2022, 16:04:17"
+        },
+        {
+            "id": 2,
+            "project_id": null,
+            "project_name": "(no project)",
+            "project_color": "#313131",
+            "user_id": 1,
+            "task_entry_id": null,
+            "description": "testing still",
+            "running": 0,
+            "start": "02/03/2022, 16:04:50",
+            "stop": "02/03/2022, 16:05:09"
+        }
+    ]
+}
+```
 ---
+
+### Task Entry
+#### /task_entry, POST
+
 
 ---
 ## Time-zones
