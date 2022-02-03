@@ -1,3 +1,4 @@
+from asyncio import Task
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
 from flask_sqlalchemy import SQLAlchemy
@@ -9,9 +10,11 @@ from datetime import datetime, timedelta, timezone
 import pytz
 from flask_login import UserMixin
 from pprint import pprint as pprint
+from flask_cors import CORS  # type: ignore
 
 app = Flask(__name__)
 api = Api(app)
+CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site006.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -64,13 +67,17 @@ class Project(db.Model):
     def __str__(self):
         return f"PROJECT({self.id},'{self.name}', '{User.query.get(self.user_id).username}')"
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "name": self.name,
+            "color": self.color,
+        }
 
 class Task_Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(), unique=True, nullable=True)
-    due_date = db.Column(db.DateTime, nullable=False,
-                         default=datetime.utcnow)  # iso
-    do_date = db.Column(db.DateTime, nullable=True)  # iso
     priority = db.Column(db.Integer, nullable=False, default=1)  # range(1 - 4)
     completed = db.Column(db.Integer, nullable=False,
                           default=0)  # bool (0 or 1)
@@ -81,8 +88,32 @@ class Task_Entry(db.Model):
     time_entries = db.relationship(
         'Time_Entry', backref='task_entry', lazy=True)
 
+
+    # due_date = db.Column(db.DateTime, nullable=False,
+    #                      default=datetime.utcnow)  # iso
+    # do_date = db.Column(db.DateTime, nullable=True)  # iso
+    instances = db.relationship(
+        'Task_Instance', backref='task_instance', lazy=True)
+
     def __str__(self):
         return f"TASK_ENTRY({self.id},'{self.description}',{self.due_date})"
+
+    def due(self):
+        return self.instances.query.filter_by(due=1).first()
+    def do(self):
+        return self.instances # this assumes that the due date is a do date
+        # alternate:
+        # return self.instances.query.filter_by(due=0).all()
+
+class Task_Instance(db.Model):
+    # somehow ensure only one due date when instance is added
+    # if instance is added check others with task id for 1 if 1 and due being added error
+    #TODO: only one due date per task
+    id = db.Column(db.Integer, primary_key=True)
+    instance = db.Column(db.DateTime, nullable=True)  # iso
+    due = db.Column(db.Integer, nullable=False, default=0) # 1 means due 0 means do
+    task_entry_id = db.Column(db.Integer, db.ForeignKey(Task_Entry.id), nullable=True)
+
 
 
 class Time_Entry(db.Model):
@@ -107,9 +138,19 @@ class Time_Entry(db.Model):
         # US/Eastern  #.replace(tzinfo=pytz.utc).astimezone(tz)
         tz = pytz.timezone(User.query.get(self.user_id).time_zone)
         stop_display = self.stop or datetime.utcnow()
+
+        temp_project = Project.query.get(self.project_id)
+        temp_project_name = "(no project)"
+        temp_project_color = "#313131"
+        if(temp_project != None):
+            temp_project_name = temp_project.name
+            temp_project_color = temp_project.color
+
         return {
             "id": self.id,
             "project_id": self.project_id,
+            "project_name": temp_project_name,
+            "project_color": temp_project_color,
             "user_id": self.user_id,
             "task_entry_id": self.task_entry_id,
             "description": self.description,
@@ -336,15 +377,45 @@ class Tasks(Resource):
     def get(self):
         pass
 
-
 # TODO: get and post for project creation
+
+
 class Projects(Resource):
     def post(self):
-        pass
+        parser = reqparse.RequestParser()  # initialize
+        parser.add_argument('key', required=True, location="headers",
+                            help="API KEY REQUIRED")  # add header
+        parser.add_argument('name', required=True)
+        parser.add_argument('color', required=False)  # add args
+        args = parser.parse_args()
+
+        current_user = User.query.filter_by(api_key=args['key']).first()
+        if(current_user == None):
+            return {'message': f"'{args['key']}' is an invalid API key"}, 401
+
+        new_project = Project(
+            name=args['name'],
+            color=args['color'] or "#292929",
+            user_id=current_user.id,
+        )
+        db.session.add(new_project)
+        db.session.commit()
+
+        # return data and 200 OK code
+        return {'data': new_project.to_dict()}, 200
 
     def get(self):
-        # if a project id is passed get that one otherwise get all of them
-        pass
+        parser = reqparse.RequestParser()  # initialize
+        parser.add_argument('key', required=True, location="headers",
+                            help="API KEY REQUIRED")  # add header
+        args = parser.parse_args()
+
+        current_user = User.query.filter_by(api_key=args['key']).first()
+        if(current_user == None):
+            return {'message': f"'{args['key']}' is an invalid API key"}, 401
+
+        # return data and 200 OK code
+        return {'data': list(map(Project.to_dict, Project.query.filter_by(user_id=current_user.id).all()))}, 200
 
 
 api.add_resource(Users, '/users')  # '/users' is our entry point for Users
