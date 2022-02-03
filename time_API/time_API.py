@@ -55,7 +55,8 @@ class User(db.Model, UserMixin):
 
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(), unique=True, nullable=False)
+    #TODO: Unique on a by user basis
+    name = db.Column(db.String(), unique=False, nullable=False)
     color = db.Column(db.String(), nullable=False,
                       default="#292929")  # hex color
     active = db.Column(db.Integer, nullable=False, default=1)  # bool (0 or 1)

@@ -1,6 +1,11 @@
 
 # Time tracking and task management API
-
+## Contents
+- [User](#user)  
+- [Project](#project)  
+- [Time Entry](#time-entry)  
+- [Task Entry](#task-entry)  
+- [Time Zones](#time-zones)  
 ## Usage
 ### User
 
@@ -62,6 +67,51 @@ Headers:
 }
 ```
 ---
+### Project
+#### /projects, POST
+Parameters:
+```python
+{
+	"name" : "2nd project"
+	"color" : "#3470ba" # optional
+}
+```
+**Response:**
+```python
+{
+    "data": {
+        "id": 2,
+        "user_id": 1,
+        "name": "2nd project",
+        "color": "#3470ba"
+    }
+}
+```
+#### /projects, GET
+Parameters:
+```python
+None
+```
+**Response (all projects of user):**
+```python
+{
+    "data": [
+        {
+            "id": 1,
+            "user_id": 1,
+            "name": "test",
+            "color": "#292929"
+        },
+        {
+            "id": 2,
+            "user_id": 1,
+            "name": "2nd project",
+            "color": "#3470ba"
+        }
+    ]
+}
+```
+---
 ### Time Entry
 
 #### /time_entries, POST
@@ -117,6 +167,7 @@ Parameters:
 ```
 **Response:**
 ```python
+{
     "data": {
         "id": 4,
         "project_id": null,
@@ -223,9 +274,55 @@ Parameters:
 ---
 
 ### Task Entry
-#### /task_entry, POST
-
-
+#### /task_entries, POST
+Parameters:
+```python
+{
+	"description" : "random task"# optional
+	"project_id" : None # optional
+	"due_date" : "2/5/2022, 23:59:59"
+	# do dates can be added later
+}
+```
+**Response:**
+```python
+{
+    "data": {
+        "id": 25,
+        "project_id": null,
+        "project_name": "(no project)",
+        "user_id": 1,
+        "description": "random task",
+        "due_date": "02/05/2022, 23:59:59",
+        "do_dates": [],
+        "time_entries": []
+    }
+} 
+# note that there is a hidden instance object
+# yet to be documented
+```
+#### /task_entries, GET
+Parameters:
+```python
+{
+	"task_id" : 20
+}
+```
+**Response:**
+```python
+{
+    "data": {
+        "id": 20,
+        "project_id": null,
+        "project_name": "(no project)",
+        "user_id": 1,
+        "description": "20th fake task",
+        "due_date": "01/01/2023, 00:00:00",
+        "do_dates": [],
+        "time_entries": []
+    }
+}
+```
 ---
 ## Time-zones
 ```python
