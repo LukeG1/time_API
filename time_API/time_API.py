@@ -155,8 +155,6 @@ class Time_Entry(db.Model):
     def __str__(self):
         return f"TIME_ENTRY({self.id},'{self.description}',{self.duration})"
 
-    def duration(self):
-        return self.stop-self.start
 
     def to_dict(self):
         # US/Eastern  #.replace(tzinfo=pytz.utc).astimezone(tz)
