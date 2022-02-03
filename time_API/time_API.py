@@ -431,6 +431,30 @@ class Tasks(Resource):
         return {'data': return_value}, 200
 
     def get(self):
+        parser = reqparse.RequestParser()  # initialize
+        parser.add_argument('key', required=True, location="headers", help="API KEY REQUIRED")
+        parser.add_argument('task_id', required=False) 
+        args = parser.parse_args()
+
+        current_user = User.query.filter_by(api_key=args['key']).first()
+        if(current_user == None):
+            return {'message': f"'{args['key']}' is an invalid API key"}, 401
+        
+        return_value = None
+        current_task = Task_Entry.query.get(args['task_id'])
+        if(current_task == None):
+            return {'message': f"'{args['task_id']}' is not a valid task id"}, 401
+        else:
+            if(current_task.user_id == current_user.id):
+                return_value = current_task.to_dict()
+            else:
+                return {'message': f"the task with id {args['task_id']} does not belong to {current_user.username}"}, 401
+        
+        return {'data': return_value}, 200
+
+
+    #TODO: add Put for do dates
+    def put(self):
         pass
 
 # TODO: get and post for project creation
