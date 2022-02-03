@@ -20,7 +20,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # ----------------------------------------------------------------------- DATABASE OBJECTS
-
+#TODO: UPDATE README!
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -89,10 +89,6 @@ class Task_Entry(db.Model):
     time_entries = db.relationship(
         'Time_Entry', backref='task_entry', lazy=True)
 
-
-    # due_date = db.Column(db.DateTime, nullable=False,
-    #                      default=datetime.utcnow)  # iso
-    # do_date = db.Column(db.DateTime, nullable=True)  # iso
     instances = db.relationship(
         'Task_Instance', backref='task_instance', lazy=True)
 
