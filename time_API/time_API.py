@@ -15,7 +15,7 @@ from flask_cors import CORS  # type: ignore
 app = Flask(__name__)
 api = Api(app)
 CORS(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site006.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site007.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -77,7 +77,8 @@ class Project(db.Model):
 
 class Task_Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String(), unique=True, nullable=True)
+    #TODO: RESET DATABASE FOR UNIQUE CONSTRAINT TO GO AWAY
+    description = db.Column(db.String(), unique=False, nullable=True)
     priority = db.Column(db.Integer, nullable=False, default=1)  # range(1 - 4)
     completed = db.Column(db.Integer, nullable=False,
                           default=0)  # bool (0 or 1)
@@ -98,12 +99,32 @@ class Task_Entry(db.Model):
     def __str__(self):
         return f"TASK_ENTRY({self.id},'{self.description}',{self.due_date})"
 
+    #TODO: optimize
     def due(self):
-        return self.instances.query.filter_by(due=1).first()
+        return Task_Instance.query.filter_by(task_entry_id=self.id,due=1).first()
     def do(self):
-        return self.instances # this assumes that the due date is a do date
+        # return self.instances # this assumes that the due date is a do date
         # alternate:
-        # return self.instances.query.filter_by(due=0).all()
+        return Task_Instance.query.filter_by(task_entry_id=self.id,due=0).all()
+
+    def to_dict(self):
+
+        temp_project = Project.query.get(self.project_id)
+        temp_project_name = "(no project)"
+        if(temp_project != None):
+            temp_project_name = temp_project.name
+
+        #TODO: Time zone on instances?
+        return {
+            "id": self.id,
+            "project_id": self.project_id,
+            "project_name": temp_project_name,
+            "user_id": self.user_id,
+            "description": self.description,
+            "due_date": self.due().instance.strftime("%m/%d/%Y, %H:%M:%S"),
+            "do_dates": list(map(str, self.time_entries)),
+            "time_entries": self.time_entries,
+        }
 
 class Task_Instance(db.Model):
     # somehow ensure only one due date when instance is added
@@ -113,6 +134,10 @@ class Task_Instance(db.Model):
     instance = db.Column(db.DateTime, nullable=True)  # iso
     due = db.Column(db.Integer, nullable=False, default=0) # 1 means due 0 means do
     task_entry_id = db.Column(db.Integer, db.ForeignKey(Task_Entry.id), nullable=True)
+
+    def __str__(self):
+        temp_instance = self.instance.strftime("%m/%d/%Y, %H:%M:%S")
+        return f"TASK_INSTANCE({self.id},'{temp_instance}','{self.task_entry_id}')"
 
 
 
@@ -133,6 +158,9 @@ class Time_Entry(db.Model):
 
     def __str__(self):
         return f"TIME_ENTRY({self.id},'{self.description}',{self.duration})"
+
+    def duration(self):
+        return self.stop-self.start
 
     def to_dict(self):
         # US/Eastern  #.replace(tzinfo=pytz.utc).astimezone(tz)
@@ -372,7 +400,41 @@ class Timers(Resource):
 # TODO: tasks as a whole
 class Tasks(Resource):
     def post(self):
-        pass
+        parser = reqparse.RequestParser()  # initialize
+        parser.add_argument('key', required=True, location="headers", help="API KEY REQUIRED")
+        parser.add_argument('project_id', required=False) 
+        #TODO: the due date is going to be coming in in the timezone the user specified, nust be converted to utc for server
+        parser.add_argument('due_date', required=True)
+        parser.add_argument('description', required=False)
+        args = parser.parse_args()
+
+        current_user = User.query.filter_by(api_key=args['key']).first()
+        if(current_user == None):
+            return {'message': f"'{args['key']}' is an invalid API key"}, 401
+            
+        # add a task with description to the user
+        # add/link an instance to that task with due = 1
+
+        new_task = Task_Entry(
+            user_id=current_user.id,
+            project_id=args.get('project_id'),
+            description=args.get('description'),
+        )
+        db.session.add(new_task)
+        db.session.commit()
+        return_value = new_task
+
+        #TODO: CLEAN UP TIME STUFF
+        new_instance = Task_Instance(
+            task_entry_id = new_task.id,
+            instance = datetime.strptime(args.get('due_date'), "%m/%d/%Y, %H:%M:%S"),
+            due = 1,
+        )
+        db.session.add(new_instance)
+        db.session.commit()
+
+        return_value = return_value.to_dict()
+        return {'data': return_value}, 200
 
     def get(self):
         pass
