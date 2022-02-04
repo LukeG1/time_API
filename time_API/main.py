@@ -275,7 +275,7 @@ class Timers(Resource):
         return_value = None
         # they gave a blank timer
         if(args['start'] == None and args['end'] == None and args['time_entry_id'] == None):
-            if(Time_Entry.query.filter_by(running=1).first() is not None):
+            if(Time_Entry.query.filter_by(running=1, user_id=current_user.id).first() is not None):
                 return {'message': "You already have a running timer!"}, 401
 
             new_timer = Time_Entry(
