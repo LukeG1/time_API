@@ -71,7 +71,7 @@ export class StartTimeEntry extends React.Component {
 			mode: "cors",
 			method: "GET",
 			headers: {
-				key: "kiE3eTPhGN_8q3CpCvnRpQ",
+				key: "PbaXVplsecyyj9xjjO6pfQ",
 			},
 		})
 			.then((res) => res.json())
@@ -126,7 +126,7 @@ export class StartTimeEntry extends React.Component {
 				mode: "cors",
 				method: "POST",
 				headers: {
-					key: "kiE3eTPhGN_8q3CpCvnRpQ",
+					key: "PbaXVplsecyyj9xjjO6pfQ",
 				},
 			}
 		)

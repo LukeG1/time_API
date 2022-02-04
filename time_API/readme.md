@@ -16,6 +16,7 @@ Parameters:
 {
 	"username" : "luke"
 	"Password" : "pass"
+    "email" : "l@email.com"
 	"tz" : "UTC"
 }
 ```

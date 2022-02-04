@@ -1,10 +1,8 @@
 import React from "react";
 import "./App.css";
 import { Navbar } from "./components/NavBar";
+import { PieChart } from "./components/PieChart";
 import { TimeEntryHome } from "./components/TimeEntryHome";
-//import SideNav, { NavItem } from "@trendmicro/react-sidenav";
-//import "@trendmicro/react-sidenav/dist/react-sidenav.css";
-//import { BsHouse, BsBook, BsPieChart, BsPerson } from "react-icons/bs";
 
 //MY TIME TRACKING API KEY: kiE3eTPhGN_8q3CpCvnRpQ
 export class App extends React.Component {
@@ -22,13 +20,13 @@ export class App extends React.Component {
 			mode: "cors",
 			method: "GET",
 			headers: {
-				key: "kiE3eTPhGN_8q3CpCvnRpQ",
+				key: "PbaXVplsecyyj9xjjO6pfQ",
 			},
 		})
 			.then((res) => res.json())
 			.then((data) => {
 				this.setState({
-					recent: data.data.slice(-1 * 10).reverse(),
+					recent: data.data.slice(-1 * 15).reverse(),
 				});
 			})
 			.catch(console.log);
@@ -39,7 +37,7 @@ export class App extends React.Component {
 			mode: "cors",
 			method: "GET",
 			headers: {
-				key: "kiE3eTPhGN_8q3CpCvnRpQ",
+				key: "PbaXVplsecyyj9xjjO6pfQ",
 			},
 		})
 			.then((res) => res.json())
@@ -69,17 +67,28 @@ export class App extends React.Component {
 					data={this.state.curent_time}
 				/>
 
-				{this.state.recent != null ? (
-					<div>
-						{this.state.recent.map(function (object, i) {
-							return (
-								<TimeEntryHome data={object} key={object.id} />
-							);
-						})}
+				<div className="row">
+					<div className="col-8">
+						{this.state.recent != null ? (
+							<div>
+								{this.state.recent.map(function (object, i) {
+									return (
+										<TimeEntryHome
+											data={object}
+											key={object.id}
+										/>
+									);
+								})}
+							</div>
+						) : (
+							<h1>Start tracking to see something here</h1>
+						)}
 					</div>
-				) : (
-					<h1>Start tracking to see something here</h1>
-				)}
+					<div className="col-4 align-middle">
+						<PieChart />
+						{/* PIE CHART */}
+					</div>
+				</div>
 			</div>
 		);
 	}

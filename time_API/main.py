@@ -123,6 +123,7 @@ class Task_Entry(db.Model):
             "time_entries": self.time_entries,
         }
 
+#TODO: give each a time zone, default to users time zone
 class Task_Instance(db.Model):
     # somehow ensure only one due date when instance is added
     # if instance is added check others with task id for 1 if 1 and due being added error
@@ -137,7 +138,7 @@ class Task_Instance(db.Model):
         return f"TASK_INSTANCE({self.id},'{temp_instance}','{self.task_entry_id}')"
 
 
-
+#TODO: give each a time zone, default to users time zone
 class Time_Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(), nullable=True)
